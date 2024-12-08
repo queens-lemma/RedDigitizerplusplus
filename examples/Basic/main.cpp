@@ -17,9 +17,16 @@ int main(int argc, char* argv[]) {
         model_str = argv[1];
     }
 
-    auto model = CAENDigitizerModelsMap.at(model_str);
-
     std::shared_ptr<iostream_wrapper> logger = std::make_shared<iostream_wrapper>();
+    RedDigitizer::CAENDigitizerModel model;
+    try {
+        model = CAENDigitizerModelsMap.at(model_str);
+    } catch(std::out_of_range&) {
+        logger->error("Input model is not supported. Defaulting to V1740D");
+        model = RedDigitizer::CAENDigitizerModel::V1740D;
+    }
+
+    
     CAEN resource(logger,
                   model,                        // CAEN Model
                   CAENConnectionType::USB,      // Connection type
@@ -27,10 +34,16 @@ int main(int argc, char* argv[]) {
                   0,                            // Conet Node.
                   0);                           // VME Address
 
+    if(resource.HasError() || not resource.IsConnected()) {
+        logger->error("Failed to connect to the CAEN digitizer.");
+        return -1;
+    }
+
     // Setup
     CAENGlobalConfig global_config;
     std::array<CAENGroupConfig, 8> group_configs;
     resource.Setup(global_config, group_configs);
 
     // That's it for this demo!
+    return 0;
 }

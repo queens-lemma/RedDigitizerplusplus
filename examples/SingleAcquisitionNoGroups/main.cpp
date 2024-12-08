@@ -21,6 +21,11 @@ int main() {
                       0,                            // Conet Node.
                       0);                           // VME Address
 
+        if(resource.HasError() || not resource.IsConnected()) {
+            logger->error("Failed to connect to the CAEN digitizer.");
+            return -1;
+        }
+
         // Setup
         CAENGlobalConfig global_config;
         global_config.RecordLength = 1000;
@@ -31,6 +36,11 @@ int main() {
         group_configs[0].TriggerMask[0] = true;
 
         resource.Setup(global_config, group_configs);
+
+        if(resource.HasError()) {
+            logger->error("Error during setup.");
+            return -1;
+        }
 
         resource.EnableAcquisition();
         // waveform now points to the internal waveform resource
@@ -64,4 +74,6 @@ int main() {
     for(auto count : waveform) {
         std::cout << count << std::endl;
     }
+
+    return 0;
 }

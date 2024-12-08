@@ -513,9 +513,9 @@ class CAENWaveforms {
                                      _data.cbegin() + _record_length*(ch+1));
     }
 
-//    [[nodiscard]] std::span<DataType> getData() noexcept {
-//        return std::span<DataType>(_data);
-//    }
+   [[nodiscard]] std::span<DataType> getData() noexcept {
+       return std::span<DataType>(_data);
+   }
 
  private:
     // Raw waveform data as one continuous 1-D array
@@ -813,7 +813,7 @@ class CAEN {
         if (not _is_connected) {
             _caen_api_handle = -1;
             _has_error = true;
-            _print_if_err("CAEN_DGTZ_OpenDigitizer", __FUNCTION__, "Failed "
+            _print_if_err("CAEN_DGTZ_OpenDigitizer", "CAEN()", "Failed "
                 "to open the port to the digitizer.");
         } else {
             _logger->info("Connected resource with handle {0} with "
