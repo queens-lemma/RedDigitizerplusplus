@@ -1,6 +1,14 @@
 /*
-T
 
+    Red Digitizer C++ single include file
+
+    Author: Dr. Hawley Herrera
+
+    The include file abstracts the CAEN C API to allow a maneagable
+    memory organization and communicating with the devices.
+
+    This library uses CAENDigitizer as the base, so any function not
+    found in CAENDigitizer is not supported here as well.
 */
 
 #ifndef RD_HELPER_H
@@ -59,6 +67,8 @@ enum class CAENConnectionType {
     A4818,
     OpticalLink,    // Not supported
     Ethernet_V4718, // Only available for V4718 (not supported)
+    USB_A4818_V2718,
+    USB_A4818_V3718,
     USB_V4718       // not supported
 };
 
@@ -69,6 +79,7 @@ enum class CAENDigitizerModel {
 #endif
     DT5730B,
     DT5740D,
+    V1730S,
     V1740D
 };
 
@@ -104,6 +115,7 @@ const static inline std::unordered_map<std::string, CAENDigitizerModel>
 #ifndef NDEBUG
         {"DEBUG", CAENDigitizerModel::DEBUG},
 #endif
+        {"V1730S", CAENDigitizerModel::V1730S},
         {"DT5730B", CAENDigitizerModel::DT5730B},
         {"DT5740D", CAENDigitizerModel::DT5740D},
         {"V1740D", CAENDigitizerModel::V1740D}
@@ -158,6 +170,17 @@ const static inline std::unordered_map<CAENDigitizerModel, CAENDigitizerModelCon
             1024,       // MaxNumBuffers
             1.5f,       // NLOCToRecordLength
             {2.0}       // VoltageRanges
+        }},
+        {CAENDigitizerModel::V1730S, CAENDigitizerModelConstants {
+            14,         // ADCResolution
+            500e6,     //  AcquisitionRate
+            static_cast<uint32_t>(640e3),  // MemoryPerChannel
+            16,         // NumChannels
+            0,          // NumChannelsPerGroup
+            16,          // NumberOfGroups
+            1024,       // MaxNumBuffers
+            10.0f,       // NLOCToRecordLength
+            {0.5, 2.0}       // VoltageRanges
         }}
     // This is a C++20 higher feature so lets keep everything 17 compliant
     // CAENDigitizerModelsConstants_map {
@@ -721,6 +744,7 @@ class CAEN {
             return CAENDigitizerFamilies::x740;
         default:
         case CAENDigitizerModel::DT5730B: 
+        case CAENDigitizerModel::V1730S:
             return CAENDigitizerFamilies::x730;
         }
     }
@@ -791,6 +815,7 @@ class CAEN {
             _connection_info_map[id] = true;
         }
 
+        CAENComm_ErrorCode err;
         // If the item exists, pass on the creation
         // TODO(Any): it is missing the other types of connections
         switch (ct) {
@@ -798,6 +823,15 @@ class CAEN {
             _err_code = CAEN_DGTZ_OpenDigitizer(
                 CAEN_DGTZ_ConnectionType::CAEN_DGTZ_USB_A4818,
                 ln, cn, addr, &_caen_api_handle);
+        break;
+        
+        case CAENConnectionType::USB_V4718:
+             err = CAENComm_OpenDevice2(
+                CAEN_Comm_ConnectionType::CAENComm_USB,
+                &ln, cn, addr, &_caen_api_handle
+            );
+            logger->info("{0}", err);
+            _err_code = CAEN_DGTZ_ErrorCode::CAEN_DGTZ_Success;
         break;
 
         case CAENConnectionType::USB:
